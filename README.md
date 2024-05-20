@@ -1,7 +1,7 @@
 # PootBot
 
 <p align="center">
-  <img width="300" height="300" src="https://raw.githubusercontent.com/AhmetMuratAcar/PootBot/main/Images/PootBot%20Logo.webp">
+  <img width="300" height="300" src="https://raw.githubusercontent.com/AhmetMuratAcar/PootBot/main/Images/PootBot-Logo.png">
 </p>
 
 ## What is it
