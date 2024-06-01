@@ -1,84 +1,57 @@
 import discord
-from discord import app_commands
 import os
+import sqlite3
 from dotenv import load_dotenv
+from discord.ext import commands
+from discord import app_commands
 
 # Loading .env
 BASEDIR = os.path.abspath(os.path.dirname(__file__))
 load_dotenv(os.path.join(BASEDIR, '.env'))
 
-# Creating client instance
+# Creating instance
 intents = discord.Intents.all()
-client = discord.Client(intents=intents)
-tree = app_commands.CommandTree(client)
+bot = commands.Bot(command_prefix="!", intents=intents)
 
-current_game = "No game selected"
-
-@client.event
+@bot.event
 async def on_ready():
-    await tree.sync()
-    print(f'Logged in as {client.user.name}')
+    print(f'Logged in as {bot.user.name}')
+    guild = discord.Object(id=857676061664083978)
+    await bot.tree.sync(guild=guild)
 
 
-# Commanmds
-@tree.command(
-    name="current-flavor",
-    description="Display the current flavor of the month game."
+# Commands
+@bot.tree.command(
+    name="setup_master_message", 
+    description="Setup the master message in a specified channel",
 )
-async def current_flavor(interaction: discord.Interaction):
-    """Sends message displaying the current game."""
-    await interaction.response.send_message(f"The current flavor of the month is: **{current_game}**")
+@app_commands.checks.has_permissions(administrator = True)
+async def setup_master_message(interaction: discord.Interaction, channel: discord.TextChannel):
+    # Connect to the database
+    conn = sqlite3.connect('PootBot.db')
+    cursor = conn.cursor()
+
+    # Fetch all games from the database
+    cursor.execute("SELECT game, role, emoji FROM games")
+    games = cursor.fetchall()
+    conn.close()
+
+    # Construct the message content
+    message_content = "Welcome to the server! Here are the current games, roles, and emojis:\n"
+    for game, role, emoji in games:
+        message_content += f"{emoji} - {game} (Role: {role})\n"
+
+    # Send the message to the specified channel
+    master_message = await channel.send(message_content)
+
+    # Add each emoji as a reaction to the message
+    for game, role, emoji in games:
+        try:
+            await master_message.add_reaction(emoji)
+        except discord.HTTPException:
+            continue  # If the emoji is invalid or can't be used, skip it
+
+    await interaction.response.send_message(f"Master message setup in {channel.mention}", ephemeral=True)
 
 
-@tree.command(
-    name = "change-flavor",
-    description = "Change the flavor of the month game."
-)
-async def change_flavor(interaction: discord.Interaction, new_game: str):
-    """
-    Input: new game title <string>
-    Notifies previous users of flavor change, removes them, and sends new flavor message.
-    """
-    global current_game
-    if current_game == new_game:
-        await interaction.response.send_message("That is already the current flavor of the month.")
-        return
-
-    current_game = new_game
-
-    role_name = "Current Flavor"
-    guild = interaction.guild
-    role = discord.utils.get(guild.roles, name=role_name)
-
-    if not role:
-        role = await guild.create_role(name=role_name)
-
-    # Notify and clear previous members
-    await interaction.response.send_message(f"{role.mention} flavor changing 🤖", allowed_mentions=discord.AllowedMentions(roles=True))
-    for member in role.members:
-        await member.remove_roles(role)
-    
-    # Send a follow-up message regarding the new game and adding a reaction
-    message = await interaction.followup.send(f"The flavor of the month game has been changed to **'{new_game}'**. If you want to be notified, click the check mark.")
-    await message.add_reaction('✅')
-
-    # Listener for reaction adds
-    @client.event
-    async def on_raw_reaction_add(payload):
-        # Check if the reaction is to the correct message, correct emoji, and add role
-        if payload.message_id == message.id and str(payload.emoji) == '✅':
-            member = guild.get_member(payload.user_id)
-            if member and not member.bot:
-                await member.add_roles(role)
-
-    # Listener for reaction removals
-    @client.event
-    async def on_raw_reaction_remove(payload):
-        # Check if the reaction removed is from the correct message, correct emoji, and remove role
-        if payload.message_id == message.id and str(payload.emoji) == '✅':
-            member = guild.get_member(payload.user_id)
-            if member and not member.bot:
-                await member.remove_roles(role)
-
-
-client.run(os.getenv('TOKEN'))
+bot.run(os.getenv('TOKEN'))
