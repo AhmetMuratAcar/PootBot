@@ -1,9 +1,9 @@
 import discord
 import os
-import sqlite3
 from dotenv import load_dotenv
 from discord.ext import commands
 from discord import app_commands
+from utils.msgJSON import save_message_id, load_message_id
 
 # Loading .env
 BASEDIR = os.path.abspath(os.path.dirname(__file__))
@@ -13,45 +13,40 @@ load_dotenv(os.path.join(BASEDIR, '.env'))
 intents = discord.Intents.all()
 bot = commands.Bot(command_prefix="!", intents=intents)
 
+
 @bot.event
 async def on_ready():
     print(f'Logged in as {bot.user.name}')
-    guild = discord.Object(id=857676061664083978)
+    guild = discord.Object(id=os.getenv('GUILD_ID'))
     await bot.tree.sync(guild=guild)
 
 
 # Commands
 @bot.tree.command(
-    name="setup_master_message", 
+    name="setup_master_message",
     description="Setup the master message in a specified channel",
 )
-@app_commands.checks.has_permissions(administrator = True)
+@app_commands.checks.has_permissions(administrator=True)
 async def setup_master_message(interaction: discord.Interaction, channel: discord.TextChannel):
-    # Connect to the database
-    conn = sqlite3.connect('PootBot.db')
-    cursor = conn.cursor()
-
-    # Fetch all games from the database
-    cursor.execute("SELECT game, role, emoji FROM games")
-    games = cursor.fetchall()
-    conn.close()
 
     # Construct the message content
     message_content = "Welcome to the server! Here are the current games, roles, and emojis:\n"
-    for game, role, emoji in games:
-        message_content += f"{emoji} - {game} (Role: {role})\n"
 
-    # Send the message to the specified channel
+    # Send the message to the specified channel and save its data as JSON
     master_message = await channel.send(message_content)
-
-    # Add each emoji as a reaction to the message
-    for game, role, emoji in games:
-        try:
-            await master_message.add_reaction(emoji)
-        except discord.HTTPException:
-            continue  # If the emoji is invalid or can't be used, skip it
+    save_message_id(master_message.id, channel.id)
 
     await interaction.response.send_message(f"Master message setup in {channel.mention}", ephemeral=True)
 
+@setup_master_message.error
+async def setup_master_message_error(interaction: discord.Interaction, error: app_commands.AppCommandError):
+    """ Send an ephemeral message if the user lacks admin permissions """
+    if isinstance(error, app_commands.errors.MissingPermissions):
+        await interaction.response.send_message(
+            "You do not have the required permissions (Administrator) to run this command.",
+            ephemeral=True
+        )
 
-bot.run(os.getenv('TOKEN'))
+
+if __name__ == "__main__":
+    bot.run(os.getenv('TOKEN'))
