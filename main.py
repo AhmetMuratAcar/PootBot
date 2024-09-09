@@ -21,11 +21,17 @@ async def on_ready():
     print(f'Logged in as {bot.user.name}')
     await bot.tree.sync()
 
-    # Fetch the master message on startup
-    master_data = load_message_id()  # Load message data from master_message.json
-    channel = bot.get_channel(master_data['channel_id'])
-    bot.master_message = await channel.fetch_message(master_data['message_id'])
-    print(f'Master message re-fetched: {bot.master_message.id}')
+    try:
+        # Attempt to load the master message data
+        master_data = load_message_id()  # Load message data from master_message.json
+        if master_data and 'channel_id' in master_data and 'message_id' in master_data:
+            channel = bot.get_channel(master_data['channel_id'])
+            bot.master_message = await channel.fetch_message(master_data['message_id'])
+            print(f'Master message re-fetched: {bot.master_message.id}')
+        else:
+            print("No master message set up.")
+    except Exception as e:
+        print(f"Error fetching master message: {e}")
 
 
 # ----------Commands----------
