@@ -142,7 +142,8 @@ async def add_role(interaction: discord.Interaction, role_name: str, emoji: str)
     await update_master_message(interaction.guild, updated_roles_content)
 
     # Creating the new role and adding reaction emoji
-    await interaction.guild.create_role(name=role_name)
+    random_color = discord.Color.random()
+    await interaction.guild.create_role(name=role_name, color=random_color)
     await master_message.add_reaction(emoji)
 
     # Notifying the user
