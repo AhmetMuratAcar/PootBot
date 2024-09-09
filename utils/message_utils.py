@@ -39,7 +39,7 @@ async def existence_check(interaction: discord.Interaction):
     data = load_message_id()
     # If the path does not exist terminate early
     if not data:
-        return False
+        return False, None
 
     # If the data exist but the message no longer exists
     try:
@@ -48,23 +48,15 @@ async def existence_check(interaction: discord.Interaction):
 
         # The channel no longer exists
         if not channel:
-            await interaction.response.send_message(
-                f"Old master message's channel was deleted, setting up new one.", 
-                ephemeral=True
-            )
             delete_message_id()
-            return False
+            return False, "channel"
 
         # Try to fetch the master message using the saved message_id
         await channel.fetch_message(data['message_id'])
 
         # If you get here the message and channel exist.
-        return True
+        return True, None
     
     except:
-        await interaction.response.send_message(
-            f"Old master message was deleted, setting up new one.", 
-            ephemeral=True
-        )
         delete_message_id()
-        return False
+        return False, "message"

@@ -17,27 +17,43 @@ bot = commands.Bot(command_prefix="!", intents=intents)
 @bot.event
 async def on_ready():
     print(f'Logged in as {bot.user.name}')
-    guild = discord.Object(id=os.getenv('GUILD_ID'))
-    await bot.tree.sync(guild=guild)
+    await bot.tree.sync()
 
 
 # Commands
 @bot.tree.command(
     name="setup_master_message",
-    description="Setup the master message in a specified channel",
+    description="Cretes message that will be used to control roles in the give channel",
 )
 @app_commands.checks.has_permissions(administrator=True)
 async def setup_master_message(interaction: discord.Interaction, channel: discord.TextChannel):
     # Check if a master message is already set up
-    masterCheck = await existence_check(interaction)
+    masterCheck, reason = await existence_check(interaction)
     if masterCheck:
         data = load_message_id()
-        existing_channel = interaction.guild.get_channel(data['channel_id'])
+        message_url = f"https://discord.com/channels/{interaction.guild.id}/{data['channel_id']}/{data['message_id']}"
         await interaction.response.send_message(
-            f"Master message already exists in {existing_channel.mention}", 
+            f"Master message already exists at: {message_url}", 
             ephemeral=True
         )
         return
+
+    # Telling user whats happening
+    if reason == "channel":
+        await interaction.response.send_message(
+            f"Old master message's channel was deleted, setting up new one.", 
+            ephemeral=True
+            )
+    elif reason == "message":
+        await interaction.response.send_message(
+            f"Old master message was deleted, setting up new one.", 
+            ephemeral=True
+        )
+    else:
+        await interaction.response.send_message(
+            f"Creating master message . . .", 
+            ephemeral=True
+        )
 
     # Construct the message content
     message_content = ("**Hello** :point_up: :nerd:\n\n"
