@@ -61,7 +61,8 @@ async def setup_master_message(interaction: discord.Interaction, channel: discor
     message_content = ("**Hello** :point_up: :nerd:\n\n"
                        "\> Below are the currently available roles.\n"
                        "\> Interact with the emojis to add/remove roles from yourself.\n"
-                       "\> If you want to add a role use the `/add_role` function and pass in the role name and emoji you want."
+                       "\> If you want to add a role use the `/add_role` function and pass in the role name and emoji you want.\n"
+                       "\> Only admins can use the `/remove_role` function."
                        )
 
     # Send the message to the specified channel and save its data as JSON
@@ -125,7 +126,8 @@ async def add_role(interaction: discord.Interaction, role_name: str, emoji: str)
     message_header = ("**Hello** :point_up: :nerd:\n\n"
                     "\> Below are the currently available roles.\n"
                     "\> Interact with the emojis to add/remove roles from yourself.\n"
-                    "\> If you want to add a role use the `/add_role` function and pass in the role name and emoji you want."
+                    "\> If you want to add a role use the `/add_role` function and pass in the role name and emoji you want.\n"
+                    "\> Only admins can use the `/remove_role` function."
                     )
     updated_roles_content = await format_roles_content()
     new_content = f"{message_header}```\n{updated_roles_content}\n```"
