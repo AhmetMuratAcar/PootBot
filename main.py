@@ -97,7 +97,7 @@ async def add_role(interaction: discord.Interaction, role_name: str, emoji: str)
         return
     
     # Check if role or emoji are already used
-    role_used = role_check(role_name)  # True if invalid role
+    role_used = role_check(role_name, interaction.guild)  # True if invalid role
     if role_used:
         await interaction.response.send_message(
             "The role name you entered is already being used.",
@@ -131,11 +131,15 @@ async def add_role(interaction: discord.Interaction, role_name: str, emoji: str)
     new_content = f"{message_header}```\n{updated_roles_content}\n```"
     await master_message.edit(content=new_content)
 
+    # Creating the new role and adding reaction emoji
+    await interaction.guild.create_role(name=role_name)
+
+    # Notifying the user
     await interaction.response.send_message(
         f"Role {role_name} with emoji {emoji} added to the master message!",
         ephemeral=True
     )
-
+    
 
 if __name__ == "__main__":
     bot.run(os.getenv('TOKEN'))

@@ -76,8 +76,14 @@ async def emoji_check(emoji: str, guild: discord.Guild) -> bool:
     return emoji not in roles_data.values()
 
 
-def role_check(role: str) -> bool:
+def role_check(role: str, guild: discord.Guild) -> bool:
     """Checks if role name chosen by user is already being used."""
+    # Check if the role is already being used in the server
+    existing_role = discord.utils.get(guild.roles, name=role)
+    if existing_role:
+        return True
+
+    # Check if role exists in roles.json
     if not os.path.exists(JSON_PATH):
         return False
     
