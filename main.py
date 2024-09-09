@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 from discord.ext import commands
 from discord import app_commands
 from utils.message_utils import save_message_id, existence_check, load_message_id
-from utils.role_utils import save_inputs, emoji_check, role_check
+from utils.role_utils import save_inputs, emoji_check, role_check, format_roles_content
 
 # Loading .env
 BASEDIR = os.path.abspath(os.path.dirname(__file__))
@@ -121,8 +121,15 @@ async def add_role(interaction: discord.Interaction, role_name: str, emoji: str)
     channel = interaction.guild.get_channel(data['channel_id'])
     master_message = await channel.fetch_message(data['message_id'])
 
-    updated_message = master_message.content + f"\n\n{emoji} - {role_name}"
-    await master_message.edit(content=updated_message)
+    # Reconstructing master message
+    message_header = ("**Hello** :point_up: :nerd:\n\n"
+                    "\> Below are the currently available roles.\n"
+                    "\> Interact with the emojis to add/remove roles from yourself.\n"
+                    "\> If you want to add a role use the `/add_role` function and pass in the role name and emoji you want."
+                    )
+    updated_roles_content = await format_roles_content()
+    new_content = f"{message_header}```\n{updated_roles_content}\n```"
+    await master_message.edit(content=new_content)
 
     await interaction.response.send_message(
         f"Role {role_name} with emoji {emoji} added to the master message!",

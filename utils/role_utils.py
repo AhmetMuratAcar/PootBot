@@ -88,3 +88,26 @@ def role_check(role: str) -> bool:
             roles_data = {}
 
     return role in roles_data
+
+
+async def format_roles_content() -> str:
+    """
+    Reads the roles.json file and formats the roles and emojis
+    into a structured list within a code block.
+    """
+    if not os.path.exists(JSON_PATH):
+        return
+
+    with open(JSON_PATH, 'r') as file:
+        try:
+            roles_data = json.load(file)
+        except json.JSONDecodeError:
+            roles_data = {}
+
+    # Format the roles and emojis into a text block
+    formatted_roles = []
+    for role, emoji in roles_data.items():
+        formatted_roles.append(f"{emoji} - {role}")
+
+    # Join all the role-emoji pairs into a string
+    return "\n".join(formatted_roles)
