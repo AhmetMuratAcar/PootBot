@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 from discord.ext import commands
 from discord import app_commands
 from utils.message_utils import save_message_id, existence_check, load_message_id
-from utils.role_utils import save_inputs, emoji_check, role_check, format_roles_content
+from utils.role_utils import save_inputs, emoji_check, role_check, format_roles_content, load_roles_json
 
 # Loading .env
 BASEDIR = os.path.abspath(os.path.dirname(__file__))
@@ -135,6 +135,7 @@ async def add_role(interaction: discord.Interaction, role_name: str, emoji: str)
 
     # Creating the new role and adding reaction emoji
     await interaction.guild.create_role(name=role_name)
+    await master_message.add_reaction(emoji)
 
     # Notifying the user
     await interaction.response.send_message(
@@ -149,7 +150,7 @@ async def add_role(interaction: discord.Interaction, role_name: str, emoji: str)
     description="Removes chosen role from the master message and server",
 )
 @app_commands.checks.has_permissions(administrator=True)
-async def remove_role():
+async def remove_role(interaction: discord.Interaction, role_name: str):
     pass
 
 
@@ -161,6 +162,67 @@ async def setup_master_message_error(interaction: discord.Interaction, error: ap
             "You do not have the required permissions (Administrator) to run this command.",
             ephemeral=True
         )
+
+
+# Events
+@bot.event
+async def on_reaction_add(reaction, user):
+    """Assign a role to a user when they react with the corresponding emoji to the master message."""
+    # Ignore bot reactions
+    if user.bot:
+        return
+
+    # Load the master message ID and roles data from roles.json
+    data = load_message_id()
+    roles_data = load_roles_json()
+
+    # Check if the reaction is on the master message
+    if reaction.message.id != data['message_id']:
+        return
+
+    # Check if the emoji used in the reaction corresponds to a role
+    emoji = str(reaction.emoji)  # Convert the reaction emoji to string
+    if emoji in roles_data.values():
+        # Get the corresponding role name
+        role_name = next(role for role, emoji_value in roles_data.items() if emoji_value == emoji)
+
+        # Find the role object on the server
+        role = discord.utils.get(reaction.message.guild.roles, name=role_name)
+
+        # Add the role to the user
+        if role:
+            await user.add_roles(role)
+            await user.send(f"You have been given the role: {role_name}")
+
+
+@bot.event
+async def on_reaction_remove(reaction, user):
+    """Remove a role from a user when they remove the corresponding emoji reaction from the master message."""
+    # Ignore bot reactions
+    if user.bot:
+        return
+
+    # Load the master message ID and roles data from roles.json
+    data = load_message_id()
+    roles_data = load_roles_json()
+
+    # Check if the reaction is on the master message
+    if reaction.message.id != data['message_id']:
+        return
+
+    # Check if the emoji used in the reaction corresponds to a role
+    emoji = str(reaction.emoji)  # Convert the reaction emoji to string
+    if emoji in roles_data.values():
+        # Get the corresponding role name
+        role_name = next(role for role, emoji_value in roles_data.items() if emoji_value == emoji)
+
+        # Find the role object on the server
+        role = discord.utils.get(reaction.message.guild.roles, name=role_name)
+
+        # Remove the role from the user
+        if role:
+            await user.remove_roles(role)
+            await user.send(f"You have been removed from the role: {role_name}")
 
 
 if __name__ == "__main__":

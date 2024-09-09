@@ -117,3 +117,15 @@ async def format_roles_content() -> str:
 
     # Join all the role-emoji pairs into a string
     return "\n".join(formatted_roles)
+
+
+def load_roles_json():
+    """Loads the roles and emoji data from roles.json."""
+    if not os.path.exists(JSON_PATH):
+        return {}
+
+    with open(JSON_PATH, 'r') as file:
+        try:
+            return json.load(file)
+        except json.JSONDecodeError:
+            return {}
