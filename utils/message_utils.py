@@ -60,3 +60,23 @@ async def existence_check(interaction: discord.Interaction):
     except:
         delete_message_id()
         return False, "message"
+
+
+async def update_master_message(guild: discord.Guild, updated_roles_content: str):
+    """Fetches the master message and updates it with new content."""
+    # Load the master message and channel data
+    data = load_message_id()
+    channel = guild.get_channel(data['channel_id'])
+    master_message = await channel.fetch_message(data['message_id'])
+
+    # Construct the updated master message content
+    message_header = (
+        "**Hello** :point_up: :nerd:\n\n"
+        "\> Below are the currently available game roles.\n"
+        "\> Interact with the emojis to add/remove roles from yourself.\n"
+        "\> If you want to add a game, use the `/add_game` function and pass in the game name and emoji you want.\n"
+    )
+    new_message_content = f"{message_header}```\n{updated_roles_content}\n```"
+
+    # Update the master message with the new content
+    await master_message.edit(content=new_message_content)
