@@ -29,8 +29,10 @@ async def on_ready():
             bot.master_message = await channel.fetch_message(master_data['message_id'])
             print(f'Master message re-fetched: {bot.master_message.id}')
         else:
+            bot.master_message = None  # No master message is set
             print("No master message set up.")
     except Exception as e:
+        bot.master_message = None
         print(f"Error fetching master message: {e}")
 
 
@@ -212,7 +214,7 @@ async def setup_master_message_error(interaction: discord.Interaction, error: ap
 # ----------Events----------
 @bot.event
 async def on_raw_reaction_add(payload):
-    if payload.message_id == bot.master_message.id:
+    if bot.master_message and payload.message_id == bot.master_message.id:
         roles_data = load_roles_json()  # Load emoji-to-role mapping from roles.json
         guild = bot.get_guild(payload.guild_id)
         member = guild.get_member(payload.user_id)
@@ -228,7 +230,7 @@ async def on_raw_reaction_add(payload):
 
 @bot.event
 async def on_raw_reaction_remove(payload):
-    if payload.message_id == bot.master_message.id:
+    if bot.master_message and payload.message_id == bot.master_message.id:
         roles_data = load_roles_json()  # Load emoji-to-role mapping from roles.json
         guild = bot.get_guild(payload.guild_id)
         member = guild.get_member(payload.user_id)
@@ -240,7 +242,6 @@ async def on_raw_reaction_remove(payload):
                     await member.remove_roles(role)
                     print(f"Removed {role.name} from {member.name}")
                     break
-
 
 if __name__ == "__main__":
     bot.run(os.getenv('TOKEN'))
