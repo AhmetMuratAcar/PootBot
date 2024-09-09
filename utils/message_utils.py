@@ -2,7 +2,7 @@ import json
 import os
 import discord
 
-DATA_DIR = DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data')
+DATA_DIR = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'data')
 
 # Making sure data directory exists
 if not os.path.exists(DATA_DIR):
