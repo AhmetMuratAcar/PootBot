@@ -141,7 +141,27 @@ async def add_role(interaction: discord.Interaction, role_name: str, emoji: str)
         f"Role {role_name} with emoji {emoji} added to the master message!",
         ephemeral=True
     )
-    
+
+
+# TODO: implement remove_role
+@bot.tree.command(
+    name="remove_role",
+    description="Removes chosen role from the master message and server",
+)
+@app_commands.checks.has_permissions(administrator=True)
+async def remove_role():
+    pass
+
+
+@remove_role.error
+async def setup_master_message_error(interaction: discord.Interaction, error: app_commands.AppCommandError):
+    """Send an ephemeral message if the user lacks admin permissions"""
+    if isinstance(error, app_commands.errors.MissingPermissions):
+        await interaction.response.send_message(
+            "You do not have the required permissions (Administrator) to run this command.",
+            ephemeral=True
+        )
+
 
 if __name__ == "__main__":
     bot.run(os.getenv('TOKEN'))
