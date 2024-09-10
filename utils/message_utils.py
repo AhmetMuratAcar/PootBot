@@ -76,7 +76,7 @@ async def update_master_message(guild: discord.Guild, updated_roles_content: str
         "\> Interact with the emojis to add/remove roles from yourself.\n"
         "\> If you want to add a game, use the `/add_game` function and pass in the role name and emoji you want.\n"
     )
-    new_message_content = f"{message_header}{updated_roles_content}"
+    new_message_content = f"{message_header}\n{updated_roles_content}"
 
     # Update the master message with the new content
     await master_message.edit(content=new_message_content)
