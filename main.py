@@ -143,8 +143,13 @@ async def add_role(interaction: discord.Interaction, role_name: str, emoji: str)
 
     # Creating the new role and adding reaction emoji
     random_color = discord.Color.random()
-    await interaction.guild.create_role(name=role_name, color=random_color)
+    new_role = await interaction.guild.create_role(name=role_name, color=random_color)
     await master_message.add_reaction(emoji)
+
+    # Removing role from bot
+    bot_member = interaction.guild.get_member(bot.user.id)
+    if new_role in bot_member.roles:
+        await bot_member.remove_roles(new_role)
 
     # Notifying the user
     await interaction.response.send_message(
