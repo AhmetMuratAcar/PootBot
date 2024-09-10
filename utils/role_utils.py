@@ -31,22 +31,27 @@ def save_inputs(role_name: str, emoji: str):
 
 
 async def emoji_check(emoji: str, guild: discord.Guild) -> bool:
-    """Checks if emoji chosen by user is valid and not being used already."""
-    # Check if it's a valid Unicode emoji using Discord's built-in function
+    """Checks if emoji chosen by user is valid and not already in use."""
+    
+    # Check if it's a custom emoji (in format <emoji_name:emoji_id>)
+    is_custom_emoji = False
     try:
-        await guild.fetch_emoji(int(emoji.strip('<:a:>')))  # Trying to fetch a custom emoji
+        # Attempt to fetch the custom emoji using its ID
+        custom_emoji_id = int(emoji.strip('<:a:>'))  # Extract the emoji ID
+        await guild.fetch_emoji(custom_emoji_id)
         is_custom_emoji = True
     except (ValueError, discord.NotFound):
-        # Not a custom emoji, check if it's a valid Unicode emoji
+        # If it's not a valid custom emoji, proceed to check if it's a Unicode emoji
         is_custom_emoji = False
 
+    # If it's not a custom emoji, check if it's a valid Unicode emoji
     if not is_custom_emoji:
-        # Validate if it's a standard Unicode emoji
+        # Define the pattern for valid Unicode emojis
         emoji_pattern = re.compile(
             "["  
             "\U0001F600-\U0001F64F"  # Emoticons
             "\U0001F300-\U0001F5FF"  # Symbols & Pictographs
-            "\U0001F680-\U0001F6FF"  # Transport & Map
+            "\U0001F680-\U0001F6FF"  # Transport & Map Symbols
             "\U0001F700-\U0001F77F"  # Alchemical Symbols
             "\U0001F780-\U0001F7FF"  # Geometric Shapes Extended
             "\U0001F800-\U0001F8FF"  # Supplemental Arrows-C
@@ -54,18 +59,18 @@ async def emoji_check(emoji: str, guild: discord.Guild) -> bool:
             "\U0001FA00-\U0001FA6F"  # Chess symbols
             "\U0001FA70-\U0001FAFF"  # Symbols and Pictographs Extended-A
             "\U00002702-\U000027B0"  # Dingbats
-            "\U000024C2-\U0001F251"
+            "\U000024C2-\U0001F251"  # Enclosed characters
             "]+", 
             flags=re.UNICODE
         )
         
         # Check if it's a valid Unicode emoji
         if not emoji_pattern.match(emoji):
-            return False
+            return False  # Not a valid Unicode or custom emoji
 
     # Check if the emoji is already used in roles.json
     if not os.path.exists(JSON_PATH):
-        return True  # If file doesn't exist, emoji hasn't been used yet
+        return True  # If roles.json doesn't exist, emoji hasn't been used yet
 
     with open(JSON_PATH, 'r') as file:
         try:
@@ -73,6 +78,7 @@ async def emoji_check(emoji: str, guild: discord.Guild) -> bool:
         except json.JSONDecodeError:
             roles_data = {}
 
+    # Return False if the emoji is already mapped to a role in roles.json
     return emoji not in roles_data.values()
 
 
