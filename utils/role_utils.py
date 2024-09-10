@@ -91,10 +91,13 @@ def role_check(role: str, guild: discord.Guild) -> bool:
     return role in roles_data
 
 
-async def format_roles_content(guild: discord.Guild) -> str:
-    """Formats the roles and emojis into a readable block for the master message."""
+async def format_roles_content() -> str:
+    """
+    Reads the roles.json file and formats the roles and emojis
+    into a structured list within a code block.
+    """
     if not os.path.exists(JSON_PATH):
-        return ""
+        return
 
     with open(JSON_PATH, 'r') as file:
         try:
@@ -102,21 +105,12 @@ async def format_roles_content(guild: discord.Guild) -> str:
         except json.JSONDecodeError:
             roles_data = {}
 
+    # Format the roles and emojis into a text block
     formatted_roles = []
+    for role, emoji in roles_data.items():
+        formatted_roles.append(f"{emoji} - {role}")
 
-    for role_name, emoji_str in roles_data.items():
-        # Check if the emoji is a custom emoji (i.e., it's in the format <:emoji_name:emoji_id>)
-        if emoji_str.startswith("<:") and emoji_str.endswith(">"):
-            try:
-                emoji_id = int(emoji_str.split(":")[-1][:-1])
-                emoji = guild.get_emoji(emoji_id)  # Fetch the custom emoji object
-                if emoji:
-                    emoji_str = str(emoji)  # This ensures the emoji is rendered correctly
-            except (ValueError, discord.NotFound):
-                pass  # If the emoji can't be fetched, leave it as raw text
-
-        formatted_roles.append(f"{emoji_str} - {role_name}")
-
+    # Join all the role-emoji pairs into a string
     return "\n".join(formatted_roles)
 
 
